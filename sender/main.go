@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -12,9 +13,14 @@ func main() {
 	if url == "" {
 		log.Fatalln("URL env var must be set! I'm dead now")
 	}
+	interval := os.Getenv("INTERVAL")
+	if interval == "" {
+		interval = "5"
+	}
+	intervalInt, _ := strconv.Atoi(interval)
 
 	for {
-		time.Sleep(2 * time.Second)
+		time.Sleep(time.Duration(intervalInt) * time.Second)
 		log.Printf("### Making HTTP call to %s\n", url)
 		resp, err := http.Get(url)
 		if err != nil {
