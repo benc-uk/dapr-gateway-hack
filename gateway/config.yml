@@ -27,7 +27,7 @@ data:
       access_log /dev/stdout;
 
       server {
-          listen       50002;
+          listen       50002 http2;
           server_name  _;
 
           location / {
