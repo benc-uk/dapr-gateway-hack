@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: gateway
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   ports:
     - port: 50002
       targetPort: 50002
