@@ -14,10 +14,11 @@ spec:
         dapr.io/enabled: "true"
         dapr.io/app-id: "receiver"
         dapr.io/app-port: "8080"
+        dapr.io/log-level: "debug"
     spec:
       containers:
         - name: receiver
-          image: ghcr.io/benc-uk/dapr-tester/receiver:latest
+          image: ghcr.io/benc-uk/dapr-tester/receiver:dev
           resources:
             limits:
               memory: "50Mi"

@@ -31,7 +31,17 @@ data:
           server_name  _;
 
           location / {
-              grpc_pass grpc://receiver-dapr:50002;
+            grpc_ssl_verify off;
+            grpc_ssl_certificate issuer.crt;
+            grpc_ssl_certificate_key issuer.key;
+            grpc_ssl_trusted_certificate ca.crt;
+            grpc_pass grpcs://receiver-dapr:50002;
           }
       }
     }
+  ca.crt: |
+    **** paste ca.crt from sentry-config folder here ****
+  issuer.crt: |
+    **** paste issuer.crt from sentry-config folder here ****
+  issuer.key: |
+    **** paste issuer.key from sentry-config folder here ****

@@ -16,13 +16,15 @@ spec:
     spec:
       containers:
         - name: sender
-          image: ghcr.io/benc-uk/dapr-tester/sender:latest
+          image: ghcr.io/benc-uk/dapr-tester/sender:dev
           resources:
             limits:
               memory: "50Mi"
               cpu: "500m"
           env:
-            - name: URL
-              value: "http://localhost:3500/v1.0/invoke/receiver/method/echo"
+            - name: REMOTE_APP_ID
+              value: "receiver"
+            - name: REMOTE_METHOD
+              value: "echo"
             - name: INTERVAL
-              value: "10"
+              value: "5"
