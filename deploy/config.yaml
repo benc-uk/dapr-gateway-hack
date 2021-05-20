@@ -1,0 +1,13 @@
+apiVersion: dapr.io/v1alpha1
+kind: Configuration
+metadata:
+  name: oneweek
+spec:
+  mtls:
+    allowedClockSkew: 15m
+    enabled: true
+    workloadCertTTL: 24h
+  gateways:
+    enabled: true
+    addresses:
+      aks2: "20.67.176.175:50002"

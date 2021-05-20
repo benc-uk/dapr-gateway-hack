@@ -13,6 +13,8 @@ spec:
       annotations:
         dapr.io/enabled: "true"
         dapr.io/app-id: "sender"
+        dapr.io/config: "oneweek"
+        dapr.io/log-level: "debug"
     spec:
       containers:
         - name: sender
@@ -23,7 +25,7 @@ spec:
               cpu: "500m"
           env:
             - name: REMOTE_APP_ID
-              value: "receiver"
+              value: "receiver.default.aks2"
             - name: REMOTE_METHOD
               value: "echo"
             - name: INTERVAL
