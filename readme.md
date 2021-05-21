@@ -17,3 +17,7 @@ Thanks to all the team, the work in this repo represents much of their efforts a
 - [apps](apps/) - Sample apps to test and debug service invocation
 - [deploy](deploy/) - Deploy the sample tester apps to Kubernetes in Dapr-ized mode
 - [sentry-config](sentry-config/) - Configuration for mTLS within Dapr using custom certs
+
+## Proposed High Level Architecture
+
+![](https://user-images.githubusercontent.com/14982936/119147352-68472400-ba43-11eb-8505-bb72ef3a4621.png)
