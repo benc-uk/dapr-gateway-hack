@@ -14,7 +14,7 @@ data:
         ~^(?<appid>.*?)\.(?<namespace>.*?)\. $appid-dapr.$namespace;
       }
 
-      resolver   kube-dns.kube-system.svc.cluster.local;
+      resolver kube-dns.kube-system.svc.cluster.local;
 
       server {
         set $domain cluster.local;
