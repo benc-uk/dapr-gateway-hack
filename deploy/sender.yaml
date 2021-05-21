@@ -13,6 +13,7 @@ spec:
       annotations:
         dapr.io/enabled: "true"
         dapr.io/app-id: "sender"
+        # Use custom config, see config.yaml
         dapr.io/config: "oneweek"
         dapr.io/log-level: "debug"
     spec:
@@ -25,8 +26,8 @@ spec:
               cpu: "500m"
           env:
             - name: REMOTE_APP_ID
+              # extended app-id format to go across remote gateway and second cluster called aks2
               value: "receiver.default.aks2"
-            - name: REMOTE_METHOD
-              value: "echo"
+              #value: "receiver"
             - name: INTERVAL
               value: "5"

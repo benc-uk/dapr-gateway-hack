@@ -12,7 +12,7 @@ import (
 func main() {
 	appId := os.Getenv("REMOTE_APP_ID")
 	if appId == "" {
-		log.Fatalln("REMOTE_APP_ID env var must be set! I'm dead now")
+		appId = "receiver"
 	}
 	method := os.Getenv("REMOTE_METHOD")
 	if method == "" {
@@ -28,12 +28,17 @@ func main() {
 	if daprPort == "" {
 		daprPort = "3500"
 	}
-	log.Println("### Found DAPR PORT: ", daprPort)
+	log.Printf("### Will use %s as the Dapr port\n", daprPort)
 
+	// Construct Dapr URL to invoke remote app and method
 	url := fmt.Sprintf("http://localhost:%s/v1.0/invoke/%s/method/%s", daprPort, appId, method)
+	log.Printf("### Will make HTTP requests every %d seconds to %s\n", intervalInt, url)
+
 	for {
 		time.Sleep(time.Duration(intervalInt) * time.Second)
 		log.Printf("### Making HTTP call to %s\n", url)
+
+		// Only makes GET requests but that's good enough :)
 		resp, err := http.Get(url)
 		if err != nil {
 			log.Printf("### ERROR %v", err)

@@ -8,10 +8,11 @@ for varName in CERT_PATH APP_ID PROJ_PATH; do
 done
 [[ $varUnset ]] && exit 1
 
-export DAPR_TRUST_ANCHORS=$(cat "$CERT_PATH/ca.crt" | awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}')
-export DAPR_CERT_CHAIN=$(cat "$CERT_PATH/issuer.crt" | awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}')
+export DAPR_TRUST_ANCHORS=$(cat "$CERT_PATH/root.pem" | awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}')
+export DAPR_CERT_CHAIN=$(cat "$CERT_PATH/issuer.pem" | awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}')
 export DAPR_CERT_KEY=$(cat "$CERT_PATH/issuer.key" | awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}')
 
+echo $DAPR_TRUST_ANCHORS
 export NAMESPACE=${NAMESPACE:-default}
 export SENTRY_LOCAL_IDENTITY=${SENTRY_LOCAL_IDENTITY:-default:default}
 
