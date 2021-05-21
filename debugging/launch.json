@@ -1,0 +1,42 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Dapr - Debug with mTLS",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/cmd/daprd",
+      "env": {
+        "NAMESPACE": "default",
+        "SENTRY_LOCAL_IDENTITY": "default:default"
+      },
+      "envFile": "${workspaceFolder}/.vscode/.env",
+      "preLaunchTask": "dapr-telepresence",
+      "args": [
+        "--enable-mtls",
+        "--app-id",
+        "sender",
+        "--mode",
+        "kubernetes",
+        "--dapr-http-port",
+        "3500",
+        "--dapr-grpc-port",
+        "50000",
+        "--dapr-internal-grpc-port",
+        "50002",
+        "--control-plane-address",
+        "dapr-api.dapr-system.svc.cluster.local:80",
+        "--placement-host-address",
+        "dapr-placement-server.dapr-system.svc.cluster.local:50005",
+        "--sentry-address",
+        "dapr-sentry.dapr-system.svc.cluster.local:80",
+        "--log-level",
+        "debug",
+        "--metrics-port",
+        "9099"
+      ]
+    }
+  ],
+  "compounds": []
+}

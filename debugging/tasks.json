@@ -1,0 +1,15 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "dapr-telepresence",
+      "command": "${workspaceFolder}/.vscode/dapr-telepresence.sh",
+      "type": "process",
+      "args": [
+        "/home/ben/dev/dapr-gateway-hack/sentry-config",
+        "/tmp/teleroot",
+        "${workspaceFolder}"
+      ]
+    }
+  ]
+}

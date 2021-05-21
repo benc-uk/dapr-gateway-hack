@@ -20,4 +20,4 @@ Thanks to all the team, the work in this repo represents much of their efforts a
 
 ## Proposed High Level Architecture
 
-![](https://user-images.githubusercontent.com/14982936/119147352-68472400-ba43-11eb-8505-bb72ef3a4621.png)
+![](https://user-images.githubusercontent.com/14982936/119155904-929cdf80-ba4b-11eb-87b8-1a3cb30eb865.png)

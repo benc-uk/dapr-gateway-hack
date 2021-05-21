@@ -1,3 +1,3 @@
 # Telepresence Debugging
 
-Script(s) here are unfinished, but attempt to make debugging daprd with Telepresence a little easier
+Script and .vscode configs to help debug daprd remotely using [telepresence](https://www.telepresence.io/) with mTLS
