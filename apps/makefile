@@ -2,7 +2,7 @@ SRC_DIR := ./receiver
 
 # Most likely want to override these when calling `make image`
 IMAGE_REG ?= ghcr.io
-IMAGE_REPO ?= benc-uk/dapr-gateway-experiment
+IMAGE_REPO ?= benc-uk/dapr-gateway-hack
 IMAGE_TAG ?= latest
 IMAGE_PREFIX := $(IMAGE_REG)/$(IMAGE_REPO)
 

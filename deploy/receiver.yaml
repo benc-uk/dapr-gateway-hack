@@ -18,10 +18,13 @@ spec:
     spec:
       containers:
         - name: receiver
-          image: ghcr.io/benc-uk/dapr-gateway/receiver:latest
+          image: ghcr.io/benc-uk/dapr-gateway-hack/receiver:latest
+          env:
+            - name: DUMP
+              value: "true"
           resources:
             limits:
               memory: "50Mi"
-              cpu: "500m"
+              cpu: "200m"
           ports:
             - containerPort: 8080

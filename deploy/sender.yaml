@@ -19,11 +19,11 @@ spec:
     spec:
       containers:
         - name: sender
-          image: ghcr.io/benc-uk/dapr-tester/sender:dev
+          image: ghcr.io/benc-uk/dapr-gateway-hack/sender:latest
           resources:
             limits:
               memory: "50Mi"
-              cpu: "500m"
+              cpu: "200m"
           env:
             - name: REMOTE_APP_ID
               # extended app-id format to go across remote gateway and second cluster called aks2
