@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: testapp
+spec:
+  selector:
+    matchLabels:
+      app: testapp
+  template:
+    metadata:
+      labels:
+        app: testapp
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "testapp"
+        dapr.io/app-port: "3000"
+        dapr.io/log-level: "debug"
+    spec:
+      containers:
+        - name: testapp
+          image: <INSERT_CUSTOM_REGISTRY>/perf-service_invocation_http:<INSERT_CUSTOM_TAG>
+          resources:
+            limits:
+              memory: "50Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 3000
