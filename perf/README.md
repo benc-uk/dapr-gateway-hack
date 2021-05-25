@@ -102,11 +102,6 @@ make test-perf-service_invocation_http
 vim "$REPO_ROOT/perf/perf.env"
 ```
 
-- Update the perf test environment file
-```bash
-vim "$REPO_ROOT/perf/perf.env"
-```
-
 - Source the environment file
 ```bash
 . "$REPO_ROOT/perf.env"
