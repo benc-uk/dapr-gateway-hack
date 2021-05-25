@@ -54,12 +54,7 @@ vim "$REPO_ROOT/perf/receiver/testapp.yaml"
 
 - Deploy testapp into each receiving cluster
 ```bash
-kubectl apply -f "$REPO_ROOT/perf/receiver/testapp.yaml"
-```
-
-- Expose the testapp as a Kubernetes services in each cluster.
-```bash
-kubectl expose pod testapp--... --port 3000 --target-port 3000 --type LoadBalancer
+kubectl apply -f "$REPO_ROOT/perf/receiver"
 ```
 
 - Add the gateway services' external IPs to the Dapr config
