@@ -1,4 +1,12 @@
 # Cross-Network Performance Tests
+![perf diagram](./imgs/perf.png)
+The performance test defined in this document are intended to show the latency added by dapr for cross network calls. We build on dapr's existing performance test suite to run 
+additional tests that route traffic across different AKS clusters. In the first instance, we run cross network calls within an Azure region. We then re-run the test against a geographically separated Azure region. A baseline call is made to try to approximate the expected network latency without dapr, so that we can better judge the impact dapr is having on the overall latency.
+
+To run the tests, please follow the steps below.
+
+## Running the tests
+
 - Create the test environment
 ```bash
 ./$REPO_ROOT/perf/createTestEnv.sh
@@ -82,7 +90,27 @@ vim "$REPO_ROOT/perf/perf.env"
 cd "$GOPATH/src/github.com/dapr/dapr"
 ```
 
-- Run service invocation perf tests.
+- Run service invocation perf tests against the first cluster.
+```bash
+make test-perf-service_invocation_http
+```
+
+- Update the perf test environment file to enable the second cluster.
+```bash
+vim "$REPO_ROOT/perf/perf.env"
+```
+
+- Update the perf test environment file
+```bash
+vim "$REPO_ROOT/perf/perf.env"
+```
+
+- Source the environment file
+```bash
+. "$REPO_ROOT/perf.env"
+```
+
+- Run service invocation perf tests against the second cluster.
 ```bash
 make test-perf-service_invocation_http
 ```
