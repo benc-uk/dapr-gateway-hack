@@ -126,3 +126,64 @@ vim "./perf/perf.env"
 # In the forked dapr repo
 make test-perf-service_invocation_http
 ```
+
+## Results
+Initial runs yeilded the following results:
+```json
+{
+  "testEnv": {
+    "memory": "8GB",
+    "vcpu": "4",
+    "os": "linux-amd64"
+  },
+  "testParams": {
+    "qps": "1000",
+    "connections": "16",
+    "duration": "1m",
+    "payloadSize": "1024",
+  },
+  "testResults":
+  [
+    {
+      "testName": "SameClusterSameRegion",
+      "daprVersion": "v1.1.2",
+      "latencyAddedByDapr": {
+        "75th": "1.95ms",
+        "90th": "2.31ms"
+      }
+    },,
+    {
+      "testName": "SameClusterSameRegion",
+      "daprVersion": "forked",
+      "latencyAddedByDapr": {
+        "75th": "6.41ms",
+        "90th": "8.84ms"
+      }
+    },
+    {
+      "testName": "DiffClusterSameRegion",
+      "daprVersion": "forked",
+      "latencyAddedByNetwork": {
+        "75th": "0.83ms",
+        "90th": "0.98ms"
+      },
+      "latencyAddedByDapr": {
+        "75th": "5.35ms",
+        "90th": "8.15ms"
+      }
+    },
+    {
+      "testName": "DiffClusterDiffRegion",
+      "daprVersion": "forked",
+      "latencyAddedByNetwork": {
+        "75th": "137.89ms",
+        "90th": "138.63ms"
+      },
+      "latencyAddedByDapr": {
+        "75th": "7.74ms",
+        "90th": "8.84ms"
+      }
+    }
+  ]
+}
+```
