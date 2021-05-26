@@ -151,7 +151,7 @@ Initial runs yeilded the following results:
         "75th": "1.95ms",
         "90th": "2.31ms"
       }
-    },,
+    },
     {
       "testName": "SameClusterSameRegion",
       "daprVersion": "forked",
