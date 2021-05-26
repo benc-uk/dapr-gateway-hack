@@ -22,15 +22,17 @@ function createAKS {
 # - resource group name/aks cluster name
 function deleteAKS {
   echo "Deleting AKS cluster $1..."
-  az aks delete -y -n $1 -g $1 2>&1 > /dev/null
-  az group delete -y -n $1 2>&1 > /dev/null
+  az aks delete -y -n $1 -g $1 > /dev/null 2>&1
+  az group delete -y -n $1 > /dev/null 2>&1
 }
 
 function ensureAzLogin {
-    az account show 2>&1 > /dev/null
+    set +e
+    az account get-access-token > /dev/null 2>&1
     if [[ "$?" -ne 0 ]]; then
         az login
     fi
+    set -e
 }
 
 function clean {

@@ -2,6 +2,7 @@ apiVersion: dapr.io/v1alpha1
 kind: Configuration
 metadata:
   name: gateway-config
+  namespace: dapr-tests
 spec:
   mtls:
     allowedClockSkew: 15m

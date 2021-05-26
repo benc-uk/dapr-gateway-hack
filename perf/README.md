@@ -11,12 +11,13 @@ To run the tests, please follow the steps below.
 
 - Create the test environment
 ```bash
-./$REPO_ROOT/perf/createTestEnv.sh
+# In the dapr gateway hack repo.
+./perf/createTestEnv.sh
 ```
 
 - Create custom certificates by following the instructions in `$REPO_ROOT/sentry-config/readme.md`
 
-- Clone the gateway Dapr fork
+- Clone the gateway Dapr fork repo
 ```bash
 git clone git@github.com:jjcollinge/dapr.git
 git checkout jjcollinge/gateways
@@ -24,6 +25,7 @@ git checkout jjcollinge/gateways
 
 - Build and publish the Dapr fork
 ```bash
+# In the forked dapr repo.
 export DAPR_REGISTRY="docker.io/<username>"
 export DAPR_TAG="<tag>"
 make build-linux
@@ -31,12 +33,18 @@ make docker-build
 make docker-push
 ```
 
+- Create the `dapr-system` namespace in each cluster
+```bash
+kubectl create ns dapr-system
+```
+
 - Deploy custom Dapr to each cluster
 ```bash
+# In the dapr gateway hack repo.
 helm install \
-  --set-file dapr_sentry.tls.issuer.certPEM=<issuer-cert>.pem \
-  --set-file dapr_sentry.tls.issuer.keyPEM=<issuer-cert>.key \
-  --set-file dapr_sentry.tls.root.certPEM=<root-cert>.pem \
+  --set-file dapr_sentry.tls.issuer.certPEM="$PATH_TO_ISSUER_CERT.pem" \
+  --set-file dapr_sentry.tls.issuer.keyPEM="$PATH_TO_ISSUER_CERT.key" \
+  --set-file dapr_sentry.tls.root.certPEM="$PATH_TO_ROOT_CERT.pem" \
   --set-string global.registry=docker.io/<username> \
   --set-string global.tag=<tag> \
   --namespace dapr-system \
@@ -46,11 +54,13 @@ helm install \
 
 - Deploy a gateway into each receiving cluster
 ```bash
-kubectl apply -f "$REPO_ROOT/gateway"
+# In the dapr gateway hack repo.
+kubectl apply -f "./gateway"
 ```
 
 - Build and publish the Dapr fork tests
 ```bash
+# In the forked dapr repo.
 make build-perf-app-tester
 make build-perf-app-service_invocation_http
 make push-perf-app-tester
@@ -59,55 +69,60 @@ make push-perf-app-service_invocation_http
 
 - Update the registry and tag in the testapp to use your custom images
 ```bash
-vim "$REPO_ROOT/perf/receiver/testapp.yaml"
+# In the dapr gateway hack repo.
+vim "./perf/receiver/testapp.yaml"
 ```
 
-- Deploy testapp into each receiving cluster
+- Deploy testapp into cluster 2 and cluster 3
 ```bash
-kubectl apply -f "$REPO_ROOT/perf/receiver"
+# In the dapr gateway hack repo.
+kubectl apply -f "./perf/receiver"
 ```
 
 - Add the gateway services' external IPs to the Dapr config
 ```bash
-vim "$REPO_ROOT/perf/sender/gateway-config.yaml"
+# In the dapr gateway hack repo.
+vim "./perf/sender/gateway-config.yaml"
 ```
 
-- Deploy Dapr config into sender cluster
+- Deploy Dapr config cluster 1
 ```bash
-kubectl apply -f "$REPO_ROOT/perf/sender/gateway-config.yaml"
+# In the dapr gateway hack repo.
+kubectl apply -f "./perf/sender/gateway-config.yaml"
 ```
 
 - Update the perf test environment file
 ```bash
-vim "$REPO_ROOT/perf/perf.env"
+# In the dapr gateway hack repo.
+vim "./perf/perf.env"
 ```
 
 - Source the environment file
 ```bash
-. "$REPO_ROOT/perf.env"
+# In the dapr gateway hack repo.
+. ". ./perf/perf.env"
 ```
 
-- Navigate to the Dapr code repo.
+- In cluster 1, run service invocation perf tests.
 ```bash
-cd "$GOPATH/src/github.com/dapr/dapr"
-```
-
-- Run service invocation perf tests against the first cluster.
-```bash
+# In the forked dapr repo.
 make test-perf-service_invocation_http
 ```
 
-- Update the perf test environment file to enable the second cluster.
+- Update the perf test environment file to enable cluster 3.
 ```bash
-vim "$REPO_ROOT/perf/perf.env"
+# In the dapr gateway hack repo.
+vim "./perf/perf.env"
 ```
 
 - Source the environment file
 ```bash
-. "$REPO_ROOT/perf.env"
+# In the dapr gateway hack repo.
+. "$./perf/perf.env"
 ```
 
-- Run service invocation perf tests against the second cluster.
+- In cluster 1, run service invocation perf tests.
 ```bash
+# In the forked dapr repo
 make test-perf-service_invocation_http
 ```
