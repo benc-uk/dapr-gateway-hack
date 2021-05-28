@@ -16,8 +16,8 @@ spec:
     enabled: true
     gateways:
     - name: net1
-      address: "<TESTAPP_SVC_CLUSTER1>:50002"
+      address: "<CLUSTER2_GW_SVC>:50002"
       hostname: "cluster.net1"
     - name: net2
-      address: "<TESTAPP_SVC_CLUSTER2>:50002"
+      address: "<CLUSTER3_GW_SVC>:50002"
       hostname: "cluster.net2"
