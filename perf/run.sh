@@ -71,6 +71,8 @@ function main() {
 
     # Change to cluster 1 (sender)
     k8sSetContext "$DAPR_PERF_CLUSTER1_RESOURCE_GROUP_NAME"
+    installSenderApps
+
     setTestConfig
     setSameRegionConfig
     loadConfig
