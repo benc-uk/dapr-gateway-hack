@@ -11,20 +11,28 @@ additional tests that route traffic across different AKS clusters. In the first 
 # In the dapr gateway hack repo.
 ./perf/run.sh
 ```
-
-Default config:
-- 3x AKS cluster with 3x Standard_A4_v2 nodes.
-- 2x AKS clusters located in uksouth, 1x AKS cluster located in westus.
-- 1000 QPS, 16 connection, payload size 1mb, sidecar CPU limit 4.0, sidecar mem limit 512Mi, sidecar CPU request 0.5, sidecar mem request 250Mi
-
 ## Results
 Initial runs yeilded the following results:
 ```json
 {
   "testEnv": {
-    "memory": "8GB",
-    "vcpu": "4",
-    "os": "linux-amd64"
+    "clusters": [
+      {
+        "location": "uksouth",
+        "nodeCount": "3",
+        "nodeSku": "Standard_A4_v2"
+      },
+      {
+        "location": "uksouth",
+        "nodeCount": "3",
+        "nodeSku": "Standard_A4_v2"
+      },
+      {
+        "location": "westus",
+        "nodeCount": "3",
+        "nodeSku": "Standard_A4_v2"
+      }
+    ]
   },
   "testParams": {
     "qps": "1000",
@@ -48,6 +56,10 @@ Initial runs yeilded the following results:
       "latencyAddedByDapr": {
         "75th": "6.41ms",
         "90th": "8.84ms"
+      },
+      "latencyIncreaseOverDaprBaseline": {
+        "75th": "4.76ms",
+        "90th": "6.53ms",
       }
     },
     {
@@ -60,6 +72,10 @@ Initial runs yeilded the following results:
       "latencyAddedByDapr": {
         "75th": "5.35ms",
         "90th": "8.15ms"
+      },
+      "latencyIncreaseOverDaprBaseline": {
+        "75th": "3.4ms",
+        "90th": "5.84ms",
       }
     },
     {
@@ -72,6 +88,10 @@ Initial runs yeilded the following results:
       "latencyAddedByDapr": {
         "75th": "7.74ms",
         "90th": "8.84ms"
+      },
+      "latencyIncreaseOverDaprBaseline": {
+        "75th": "5.79ms",
+        "90th": "6.53ms",
       }
     }
   ]
