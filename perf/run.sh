@@ -24,8 +24,8 @@ DAPR_PERF_CLUSTER2_RESOURCE_GROUP_NAME="${DAPR_PERF_CLUSTER2_RESOURCE_GROUP_NAME
 DAPR_PERF_CLUSTER3_RESOURCE_GROUP_NAME="${DAPR_PERF_CLUSTER3_RESOURCE_GROUP_NAME:-dapr-perf-aks-3}"  # AKS cluster 3 resource group name.
 DAPR_PERF_CLUSTER_NODE_COUNT="${DAPR_PERF_CLUSTER_NODE_COUNT:-3}"                                    # Number of nodes for AKS clusters.
 DAPR_PERF_CLUSTER_NODE_SKU="${DAPR_PERF_CLUSTER_NODE_SKU:-Standard_A4_v2}"                           # AKS node SKU.
-DAPR_GATEWAY_FORK_GIT_URL="git@github.com:jjcollinge/dapr.git"                                       # Git remote URL containing gateway code.
-DAPR_GATEWAY_FORK_BRANCH="jjcollinge/gateways"                                                       # Git branch containing gateway code.
+DAPR_GATEWAY_FORK_GIT_URL="${DAPR_GATEWAY_FORK_GIT_URL:-'git@github.com:jjcollinge/dapr.git'}"       # Git remote URL containing gateway code.
+DAPR_GATEWAY_FORK_BRANCH="${DAPR_GATEWAY_FORK_GIT_URL:-'jjcollinge/gateways'}"                       # Git branch containing gateway code.
 
 TMP_DIR=$(mktemp -d)                           # Temporary working directory.
 CERT_DIR="$TMP_DIR/certs"                      # Temporary directory to store certificates.
@@ -50,9 +50,6 @@ function main() {
        buildAndPublishDaprApps "$FORK_DIR"
     fi
 
-    # Navigate to temp dir.
-    cd "$TMP_DIR"
-
     # Change to cluster 2 (same region receiver)
     k8sSetContext "$DAPR_PERF_CLUSTER2_RESOURCE_GROUP_NAME"
     installReceiverApps
@@ -73,23 +70,11 @@ function main() {
     k8sSetContext "$DAPR_PERF_CLUSTER1_RESOURCE_GROUP_NAME"
     installSenderApps
 
-    setTestConfig
-    setSameRegionConfig
-    loadConfig
-
     if [ "$DAPR_PERF_DO_RUN_TESTS" == true ]; then
         cd "$FORK_DIR"
 
-        # Run same region tests.
-        make test-perf-service_invocation_http
-
-        # Run different region tests.
-        unsetSameRegionConfig
-        setDiffRegionConfig
-        loadConfig
-
-        # Run different region tests
-        make test-perf-service_invocation_http
+        runSameRegionTest
+        runDiffRegionTest
     fi
 
     teardown

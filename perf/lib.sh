@@ -188,31 +188,54 @@ function validateEnvVars() {
   fi
 }
 
-function setTestConfig() {
-  # Configure env file for tests.
-  cp "$SCRIPT_DIR/perf.env" .
-  sed -i "s|<DAPR_REGISTRY>|$DAPR_REGISTRY|g" "$TMP_DIR/perf.env"
-  sed -i "s|<DAPR_TAG>|$DAPR_TAG|g" "$TMP_DIR/perf.env"
+# parameters:
+# - new test config env file
+function newTestConfig() {
+  cp "$SCRIPT_DIR/perf.env" $1
+  sed -i "s|<DAPR_REGISTRY>|$DAPR_REGISTRY|g" "$1"
+  sed -i "s|<DAPR_TAG>|$DAPR_TAG|g" "$1"
 }
 
+# parameters:
+# - test config env file
 function setSameRegionConfig() {
-  sed -i "s|<CLUSTER2_TESTAPP_IP>|$CLUSTER2_TESTAPP_IP|g" "$TMP_DIR/perf.env"
+  sed -i "s|#export DAPR_XNET_APP_ID=testapp.default.net1|export DAPR_XNET_APP_ID=testapp.default.net1|g" "$1"
+  sed -i "s|#export DAPR_XNET_BASELINE_ENDPOINT=\"<CLUSTER2_TESTAPP_IP>:3000\"|export DAPR_XNET_BASELINE_ENDPOINT=\"$CLUSTER2_TESTAPP_IP:3000\"|g" "$1"
 }
 
-function unsetSameRegionConfig() {
-  LINE_PATTERN="export DAPR_XNET_BASELINE_ENDPOINT=\"$CLUSTER2_TESTAPP_IP\":3000"
-  sed -i "s|export DAPR_XNET_APP_ID=testapp.default.net1|#export DAPR_XNET_APP_ID=testapp.default.net1|g" "$TMP_DIR/perf.env"
-  sed -i "s|$LINE_PATTERN|#$LINE_PATTERN|g" "$TMP_DIR/perf.env"
-}
-
+# parameters:
+# - test config env file
 function setDiffRegionConfig() {
-  sed -i "s|#export DAPR_XNET_APP_ID=testapp.default.net2|export DAPR_XNET_APP_ID=testapp.default.net2|g" "$TMP_DIR/perf.env"
-  sed -i "s|#export DAPR_XNET_BASELINE_ENDPOINT=\"<CLUSTER3_TESTAPP_IP>:3000\"|export DAPR_XNET_BASELINE_ENDPOINT=\"$CLUSTER3_TESTAPP_IP:3000\"|g" "$TMP_DIR/perf.env"
+  sed -i "s|#export DAPR_XNET_APP_ID=testapp.default.net2|export DAPR_XNET_APP_ID=testapp.default.net2|g" "$1"
+  sed -i "s|#export DAPR_XNET_BASELINE_ENDPOINT=\"<CLUSTER3_TESTAPP_IP>:3000\"|export DAPR_XNET_BASELINE_ENDPOINT=\"$CLUSTER3_TESTAPP_IP:3000\"|g" "$1"
 }
 
-function loadConfig() {
-  source "$TMP_DIR/perf.env"
+function loadSameRegionTestConfig() {
+  newTestConfig "$TMP_DIR/xnet-perf.env"
+  setSameRegionConfig "$TMP_DIR/xnet-perf.env"
+  
+  source "$TMP_DIR/xnet-perf.env"
+}
 
+function loadDiffRegionTestConfig() {
+  newTestConfig "$TMP_DIR/net-perf.env"
+  setSameRegionConfig "$TMP_DIR/net-perf.env"
+  
+  source "$TMP_DIR/net-perf.env"
+}
+
+function runSameRegionTest() {
+  cd "$FORK_DIR"
+
+  loadSameRegionTestConfig
+  make test-perf-service_invocation_http
+}
+
+function runDiffRegionTest() {
+  cd "$FORK_DIR"
+
+  loadDiffRegionTestConfig
+  make test-perf-service_invocation_http
 }
 
 function installZipkin() {
@@ -251,15 +274,15 @@ function installReceiverApps() {
 
 function installSenderApps() {
   installDapr
+  installGatewayDaprConfig
   installZipkin
-  installDaprGatewayConfig
 }
 
-function installDaprGatewayConfig() {
+function installGatewayDaprConfig() {
   kubectl create ns dapr-tests --dry-run=server -o yaml && \
       kubectl create ns dapr-tests
 
-  cp "$SCRIPT_DIR/sender/gateway-config.yaml" .
+  cp "$SCRIPT_DIR/sender/gateway-config.yaml" "$TMP_DIR"
   sed -i "s|<CLUSTER2_GW_SVC>|$CLUSTER2_GW_IP|g" "$TMP_DIR/gateway-config.yaml"
   sed -i "s|<CLUSTER3_GW_SVC>|$CLUSTER3_GW_IP|g" "$TMP_DIR/gateway-config.yaml"
   kubectl apply -f "$TMP_DIR/gateway-config.yaml"
