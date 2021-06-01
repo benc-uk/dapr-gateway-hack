@@ -59,13 +59,17 @@ function doTeardown() {
 function teardown() {
   while true; do
     if [ -n "$1" ]; then
-      read -rp "Error on line $1!! Teardown the environment? [y/n]" yn
+      msg="Error on line $1!!"
+      code=1
     else
-      yn="y"
+      msg="Complete!!"
+      code=0
     fi
+
+    read -rp "$msg Teardown the environment? [y/n]" yn
     case $yn in
-        [Yy]* ) doTeardown; exit 1;;
-        [Nn]* ) exit 1;;
+        [Yy]* ) doTeardown; exit "$code";;
+        [Nn]* ) exit "$code";;
         * ) echo "Acceptable answers are [yYnN].";;
     esac
   done

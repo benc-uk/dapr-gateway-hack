@@ -54,44 +54,44 @@ Initial runs yeilded the following results:
       "testName": "SameClusterSameRegion",
       "daprVersion": "forked",
       "latencyAddedByDapr": {
-        "75th": "6.41ms",
-        "90th": "8.84ms"
+        "75th": "2.32ms",
+        "90th": "3.73ms"
       },
       "latencyIncreaseOverDaprBaseline": {
-        "75th": "4.76ms",
-        "90th": "6.53ms",
+        "75th": "0.37ms",
+        "90th": "1.42ms",
       }
     },
     {
       "testName": "DiffClusterSameRegion",
       "daprVersion": "forked",
       "latencyAddedByNetwork": {
-        "75th": "0.83ms",
-        "90th": "0.98ms"
+        "75th": "-0.03ms",
+        "90th": "0.03ms"
       },
       "latencyAddedByDapr": {
-        "75th": "5.35ms",
-        "90th": "8.15ms"
+        "75th": "2.80ms",
+        "90th": "3.77ms"
       },
       "latencyIncreaseOverDaprBaseline": {
-        "75th": "3.4ms",
-        "90th": "5.84ms",
+        "75th": "0.85ms",
+        "90th": "1.46ms",
       }
     },
     {
       "testName": "DiffClusterDiffRegion",
       "daprVersion": "forked",
       "latencyAddedByNetwork": {
-        "75th": "137.89ms",
-        "90th": "138.63ms"
+        "75th": "137.03ms",
+        "90th": "137.62ms"
       },
       "latencyAddedByDapr": {
-        "75th": "7.74ms",
-        "90th": "8.84ms"
+        "75th": "1.27ms",
+        "90th": "12.09ms"
       },
       "latencyIncreaseOverDaprBaseline": {
-        "75th": "5.79ms",
-        "90th": "6.53ms",
+        "75th": "-0.68ms",
+        "90th": "9.78ms",
       }
     }
   ]
