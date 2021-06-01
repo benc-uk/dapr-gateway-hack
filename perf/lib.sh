@@ -1,14 +1,16 @@
+#!/bin/bash
+
 # parameters:
 # - resource group name/aks cluster name
 # - location
 # - aks cluster node count
 # - aks cluster node sku
-function createAKS() {
-  echo "Creating AKS cluster $1..."
-  az group create -n $1 -l $2
-  az aks create -n $1 -g $1 -l $2 -c $3 -s $4
-  
-  az aks get-credentials -n $1 -g $1 --overwrite-existing
+function ensureAKS() {
+  echo "Ensuring AKS cluster $1..."
+
+  az group show -n "$1" > /dev/null 2>&1 || az group create -n "$1" -l "$2"
+  az aks show -n "$1" -g "$1" > /dev/null 2>&1 || az aks create -n "$1" -g "$1" -l "$2" -c "$3" -s "$4"
+  az aks get-credentials -n "$1" -g "$1" --overwrite-existing
 }
 
 # parameters:
@@ -21,12 +23,10 @@ function deleteAKS() {
 }
 
 function ensureAzLogin() {
-  set +e
-  az account get-access-token > /dev/null 2>&1
-  if [[ "$?" -ne 0 ]]; then
+  az account get-access-token > /dev/null 2>&1 || err=true
+  if [ "$err" ]; then
       az login
   fi
-  set -e
 }
 
 # parameters:
@@ -38,24 +38,37 @@ function k8sSetContext() {
 # parameters:
 # - load balancer service name
 function k8sGetLoadBalancerIP() {
-  until [ -n "$(kubectl get svc $1 -o jsonpath='{.status.loadBalancer.ingress[0].ip}')" ]; do
+  until [ -n "$(kubectl get svc "$1" -o jsonpath='{.status.loadBalancer.ingress[0].ip}')" ]; do
     sleep 10
   done
-  echo $(kubectl get svc $1 -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  kubectl get svc "$1" -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+}
+
+function doTeardown() {
+  echo "Tearing down..."
+
+  deleteAKS "$DAPR_PERF_CLUSTER1_RESOURCE_GROUP_NAME"
+  deleteAKS "$DAPR_PERF_CLUSTER2_RESOURCE_GROUP_NAME"
+  deleteAKS "$DAPR_PERF_CLUSTER3_RESOURCE_GROUP_NAME"
+
+  rm -rf "$TMP_DIR"
+
+  cd "$STARTING_DIR" || exit;
 }
 
 function teardown() {
-  if [ "$DAPR_PERF_DO_TEARDOWN" == true ]; then
-    echo "Tearing down..."
-
-    deleteAKS "$DAPR_PERF_CLUSTER1_RESOURCE_GROUP_NAME"
-    deleteAKS "$DAPR_PERF_CLUSTER2_RESOURCE_GROUP_NAME"
-    deleteAKS "$DAPR_PERF_CLUSTER3_RESOURCE_GROUP_NAME"
-
-    rm -rf "$TMP_DIR"
-  fi
-  
-  cd "$STARTING_DIR"
+  while true; do
+    if [ -n "$1" ]; then
+      read -rp "Error on line $1!! Teardown the environment? [y/n]" yn
+    else
+      yn="y"
+    fi
+    case $yn in
+        [Yy]* ) doTeardown; exit 1;;
+        [Nn]* ) exit 1;;
+        * ) echo "Acceptable answers are [yYnN].";;
+    esac
+  done
 }
 
 # parameters:
@@ -80,7 +93,7 @@ function printHeader() {
     echo ""
     echo "Starting creation in 10 seconds ⌛..."
     echo ""
-    echo "If the details above are not expected, please terminate now."
+    echo "If the details above are not expected, please terminate now, or press return to proceed."
     echo -ne ""
     for i in {1..10}
     do
@@ -98,20 +111,15 @@ function printHeader() {
 function generateRootAndIssuerCertificates() {
     echo "Generating certificates..."
 
-    PWD=$(pwd)
-
-    cd "$CERT_DIR"
     cp "$REPO_ROOT/sentry-config/root.conf" "$CERT_DIR/root.conf"
     cp "$REPO_ROOT/sentry-config/issuer.conf" "$CERT_DIR/issuer.conf"
 
-    openssl ecparam -genkey -name prime256v1 | openssl ec -out root.key
-    openssl req -new -nodes -sha256 -key root.key -out root.csr -config $1 -extensions v3_req
-    openssl x509 -req -sha256 -days 365 -in root.csr -signkey root.key -outform PEM -out root.pem -extfile $1 -extensions v3_req
-    openssl ecparam -genkey -name prime256v1 | openssl ec -out issuer.key
-    openssl req -new -sha256 -key issuer.key -out issuer.csr -config $2 -extensions v3_req
-    openssl x509 -req -in issuer.csr -CA root.pem -CAkey root.key -CAcreateserial -outform PEM -out issuer.pem -days 365 -sha256 -extfile $2 -extensions v3_req
-  
-    cd "$PWD"
+    openssl ecparam -genkey -name prime256v1 | openssl ec -out "$CERT_DIR/root.key"
+    openssl req -new -nodes -sha256 -key "$CERT_DIR/root.key" -out "$CERT_DIR/root.csr" -config "$CERT_DIR/$1" -extensions v3_req
+    openssl x509 -req -sha256 -days 365 -in "$CERT_DIR/root.csr" -signkey "$CERT_DIR/root.key" -outform PEM -out "$CERT_DIR/root.pem" -extfile "$CERT_DIR/$1" -extensions v3_req
+    openssl ecparam -genkey -name prime256v1 | openssl ec -out "$CERT_DIR/issuer.key"
+    openssl req -new -sha256 -key "$CERT_DIR/issuer.key" -out "$CERT_DIR/issuer.csr" -config "$CERT_DIR/$2" -extensions v3_req
+    openssl x509 -req -in "$CERT_DIR/issuer.csr" -CA "$CERT_DIR/root.pem" -CAkey "$CERT_DIR/root.key" -CAcreateserial -outform PEM -out "$CERT_DIR/issuer.pem" -days 365 -sha256 -extfile "$CERT_DIR/$2" -extensions v3_req
 }
 
 function installDapr() {
@@ -127,10 +135,13 @@ function installDapr() {
         --set-file dapr_sentry.tls.issuer.keyPEM="$CERT_DIR/issuer.key" \
         --set-file dapr_sentry.tls.root.certPEM="$CERT_DIR/root.pem" \
         --set-string global.registry="$DAPR_REGISTRY" \
-        --set-string global.tag="$DAPR_TAG_QUALIFIED" \
+        --set-string global.tag="$DAPR_QUALIFIED_TAG" \
         --namespace dapr-system \
         dapr \
         "$FORK_DIR/charts/dapr"
+
+    # Sleep to allow installation - avoids timeout on kubectl wait
+    sleep 1
 
     # Wait for operator to be ready.
     kubectl wait -n dapr-system --for=condition=ready pod -l app=dapr-operator
@@ -140,6 +151,9 @@ function installDapr() {
     kubectl delete po -n dapr-system -l app=dapr-placement
     kubectl delete po -n dapr-system -l app=dapr-sidecar-injector
     kubectl delete po -n dapr-system -l app=dapr-operator
+
+    # Sleep to allow installation - avoids timeout on kubectl wait
+    sleep 1
 
      # Wait for operator to be ready again.
     kubectl wait -n dapr-system --for=condition=ready pod -l app=dapr-operator
@@ -156,19 +170,28 @@ function uninstallDapr() {
 
     kubectl delete ns dapr-tests --dry-run=server && \
         kubectl delete ns dapr-tests
+
+    kubectl delete crds components.dapr.io --dry-run && \
+        kubectl delete crds components.dapr.io
+
+    kubectl delete crds configurations.dapr.io --dry-run && \
+        kubectl delete crds configurations.dapr.io
+
+    kubectl delete crds subscriptions.dapr.io --dry-run && \
+        kubectl delete crds subscriptions.dapr.io
 }
 
 function createEnv() {
     printHeader "Create" "Test Environment"
 
     # Create test environment.
-    createAKS "$DAPR_PERF_CLUSTER1_RESOURCE_GROUP_NAME" "$DAPR_PERF_CLUSTER_REGION" "$DAPR_PERF_CLUSTER_NODE_COUNT" "$DAPR_PERF_CLUSTER_NODE_SKU"
-    createAKS "$DAPR_PERF_CLUSTER2_RESOURCE_GROUP_NAME" "$DAPR_PERF_CLUSTER_REGION" "$DAPR_PERF_CLUSTER_NODE_COUNT" "$DAPR_PERF_CLUSTER_NODE_SKU"
-    createAKS "$DAPR_PERF_CLUSTER3_RESOURCE_GROUP_NAME" "$DAPR_PERF_CLUSTER_REMOTE_REGION" "$DAPR_PERF_CLUSTER_NODE_COUNT" "$DAPR_PERF_CLUSTER_NODE_SKU"
+    ensureAKS "$DAPR_PERF_CLUSTER1_RESOURCE_GROUP_NAME" "$DAPR_PERF_CLUSTER_REGION" "$DAPR_PERF_CLUSTER_NODE_COUNT" "$DAPR_PERF_CLUSTER_NODE_SKU"
+    ensureAKS "$DAPR_PERF_CLUSTER2_RESOURCE_GROUP_NAME" "$DAPR_PERF_CLUSTER_REGION" "$DAPR_PERF_CLUSTER_NODE_COUNT" "$DAPR_PERF_CLUSTER_NODE_SKU"
+    ensureAKS "$DAPR_PERF_CLUSTER3_RESOURCE_GROUP_NAME" "$DAPR_PERF_CLUSTER_REMOTE_REGION" "$DAPR_PERF_CLUSTER_NODE_COUNT" "$DAPR_PERF_CLUSTER_NODE_SKU"
 }
 
 function deleteEnv() {
-    printHeader "Create" "Test Environment"
+    printHeader "Delete" "Test Environment"
 
     # Delete test environment.
     deleteAKS "$DAPR_PERF_CLUSTER1_RESOURCE_GROUP_NAME"
@@ -193,59 +216,59 @@ function validateEnvVars() {
 function newTestConfig() {
   cp "$SCRIPT_DIR/perf.env" $1
   sed -i "s|<DAPR_REGISTRY>|$DAPR_REGISTRY|g" "$1"
-  sed -i "s|<DAPR_TAG>|$DAPR_TAG|g" "$1"
+  sed -i "s|<DAPR_TAG>|$DAPR_QUALIFIED_TAG|g" "$1"
+  source "$1"
 }
 
 # parameters:
 # - test config env file
 function setSameRegionConfig() {
-  sed -i "s|#export DAPR_XNET_APP_ID=testapp.default.net1|export DAPR_XNET_APP_ID=testapp.default.net1|g" "$1"
-  sed -i "s|#export DAPR_XNET_BASELINE_ENDPOINT=\"<CLUSTER2_TESTAPP_IP>:3000\"|export DAPR_XNET_BASELINE_ENDPOINT=\"$CLUSTER2_TESTAPP_IP:3000\"|g" "$1"
+  #sed -i "s|#export DAPR_XNET_APP_ID=testapp.default.net1|export DAPR_XNET_APP_ID=testapp.default.net1|g" "$1"
+  #sed -i "s|#export DAPR_XNET_BASELINE_ENDPOINT=\"<CLUSTER2_TESTAPP_IP>:3000\"|export DAPR_XNET_BASELINE_ENDPOINT=\"$CLUSTER2_TESTAPP_IP:3000\"|g" "$1"
+  export DAPR_XNET_APP_ID="testapp.default.net1"
+  export DAPR_XNET_BASELINE_ENDPOINT="$CLUSTER2_TESTAPP_IP:3000"
 }
 
 # parameters:
 # - test config env file
 function setDiffRegionConfig() {
-  sed -i "s|#export DAPR_XNET_APP_ID=testapp.default.net2|export DAPR_XNET_APP_ID=testapp.default.net2|g" "$1"
-  sed -i "s|#export DAPR_XNET_BASELINE_ENDPOINT=\"<CLUSTER3_TESTAPP_IP>:3000\"|export DAPR_XNET_BASELINE_ENDPOINT=\"$CLUSTER3_TESTAPP_IP:3000\"|g" "$1"
-}
-
-function loadSameRegionTestConfig() {
-  newTestConfig "$TMP_DIR/xnet-perf.env"
-  setSameRegionConfig "$TMP_DIR/xnet-perf.env"
-  
-  source "$TMP_DIR/xnet-perf.env"
-}
-
-function loadDiffRegionTestConfig() {
-  newTestConfig "$TMP_DIR/net-perf.env"
-  setSameRegionConfig "$TMP_DIR/net-perf.env"
-  
-  source "$TMP_DIR/net-perf.env"
+  #sed -i "s|#export DAPR_XNET_APP_ID=testapp.default.net2|export DAPR_XNET_APP_ID=testapp.default.net2|g" "$1"
+  #sed -i "s|#export DAPR_XNET_BASELINE_ENDPOINT=\"<CLUSTER3_TESTAPP_IP>:3000\"|export DAPR_XNET_BASELINE_ENDPOINT=\"$CLUSTER3_TESTAPP_IP:3000\"|g" "$1"
+  export DAPR_XNET_APP_ID="testapp.default.net2"
+  export DAPR_XNET_BASELINE_ENDPOINT="$CLUSTER3_TESTAPP_IP:3000"
 }
 
 function runSameRegionTest() {
   cd "$FORK_DIR"
 
-  loadSameRegionTestConfig
+  newTestConfig "$TMP_DIR/perf.env"
+  setSameRegionConfig
+
   make test-perf-service_invocation_http
 }
 
 function runDiffRegionTest() {
   cd "$FORK_DIR"
 
-  loadDiffRegionTestConfig
+  newTestConfig "$TMP_DIR/perf.env"
+  setDiffRegionConfig
+
   make test-perf-service_invocation_http
 }
 
 function installZipkin() {
-  kubectl create deployment zipkin --image openzipkin/zipkin --dry-run=server -o yaml && \
-        kubectl create deployment zipkin --image openzipkin/zipkin
+  kubectl create deployment zipkin --image openzipkin/zipkin --dry-run=server -o yaml || err=true
+  if [ ! "$err" ]; then
+    kubectl create deployment zipkin --image openzipkin/zipkin
+    kubectl expose deployment zipkin --type ClusterIP --port 9411
+  fi
 }
 
 function uninstallZipkin() {
-  kubectl delete deployment zipkin --dry-run=server -o yaml && \
-        kubectl delete deployment zipkin
+  kubectl delete deployment zipkin --dry-run=server -o yaml || err=true
+  if [ ! "$err" ]; then
+    kubectl delete deployment zipkin
+  fi
 }
 
 function installGateway() {
@@ -263,7 +286,7 @@ function installReceiverApps() {
   # Update app definitions.
   cp "$SCRIPT_DIR/receiver/testapp.yaml" "$TMP_DIR"
   sed -i "s|<INSERT_CUSTOM_REGISTRY>|$DAPR_REGISTRY|g" "$TMP_DIR/testapp.yaml"
-  sed -i "s|<INSERT_CUSTOM_TAG>|$DAPR_TAG_QUALIFIED|g" "$TMP_DIR/testapp.yaml"
+  sed -i "s|<INSERT_CUSTOM_TAG>|$DAPR_QUALIFIED_TAG|g" "$TMP_DIR/testapp.yaml"
 
   # Install apps.
   installDapr
@@ -292,21 +315,19 @@ function installGatewayDaprConfig() {
 # - dapr fork git url
 # - git branch
 function cloneDaprAndCheckoutBranch() {
-  PWD=$(pwd)
+  cd "$TMP_DIR"
 
-  git clone $1 dapr
+  git clone "$1" dapr || true
   cd dapr
-  git checkout $2
+  git checkout "$2"
 
-  cd "$PWD"
+  cd "$TMP_DIR"
 }
 
 # parameters:
 # - dapr directory
 function buildAndPublishDaprApps() {
-  PWD=$(pwd)
-
-  cd "$1"
+  cd "$FORK_DIR"
 
   # Build and publish the dapr fork.
   make build-linux
@@ -319,5 +340,5 @@ function buildAndPublishDaprApps() {
   make push-perf-app-tester
   make push-perf-app-service_invocation_http
 
-  cd "$PWD"
+  cd "$TMP_DIR"
 }

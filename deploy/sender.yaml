@@ -14,7 +14,7 @@ spec:
         dapr.io/enabled: "true"
         dapr.io/app-id: "sender"
         # Use custom config, see config.yaml
-        dapr.io/config: "oneweek"
+        dapr.io/config: "gateway-config"
         dapr.io/log-level: "debug"
     spec:
       containers:
