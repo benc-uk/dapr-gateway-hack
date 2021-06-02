@@ -2,7 +2,7 @@
 # shellcheck disable=SC2034
 # SC2034: Var appears unused. Verify use (or export if used externally)
 
-set -Eeox pipefail
+set -Eeo pipefail
 
 # Define paths.
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")  # Dir that contains the executing script.
@@ -38,7 +38,7 @@ else
     echo "Unsupported platform $OSTYPE"
     exit 1
 fi
-DAPR_TEST_TAG="$DAPR_QUALIFIED_TAG"
+export DAPR_TEST_TAG="$DAPR_QUALIFIED_TAG"
 
 # Create working directories.
 TMP_DIR=$(mktemp -d)                           # Temporary working directory.

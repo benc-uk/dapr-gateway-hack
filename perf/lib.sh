@@ -18,8 +18,8 @@ function ensureAKS() {
 function deleteAKS() {
   echo "Deleting AKS cluster $1..."
 
-  az aks delete -y -n $1 -g $1 > /dev/null 2>&1
-  az group delete -y -n $1 > /dev/null 2>&1
+  az aks delete -y -n "$1" -g "$1" > /dev/null 2>&1
+  az group delete -y -n "$1" > /dev/null 2>&1
 }
 
 function ensureAzLogin() {
@@ -59,10 +59,10 @@ function doTeardown() {
 function teardown() {
   while true; do
     if [ -n "$1" ]; then
-      msg="Error on line $1!!"
+      msg="💥 Error on line $1!!"
       code=1
     else
-      msg="Complete!!"
+      msg="✔ Complete!!"
       code=0
     fi
 
@@ -85,7 +85,7 @@ function printHeader() {
     echo "                 $2"
     echo ""
     echo "----------------------------------------------------"
-    echo "Environment 🌳:"
+    echo "Environment:"
     echo "----------------------------------------------------"
     echo "DAPR_PERF_CLUSTER1_RESOURCE_GROUP_NAME=$DAPR_PERF_CLUSTER1_RESOURCE_GROUP_NAME"
     echo "DAPR_PERF_CLUSTER2_RESOURCE_GROUP_NAME=$DAPR_PERF_CLUSTER2_RESOURCE_GROUP_NAME"
@@ -127,7 +127,7 @@ function generateRootAndIssuerCertificates() {
 }
 
 function installDapr() {
-    echo "Installing dapr..."
+    echo "Installing dapr ⚙..."
 
     # Create dapr-system namespace if not exist.
     kubectl create ns dapr-system --dry-run=server -o yaml && \
@@ -164,7 +164,7 @@ function installDapr() {
 }
 
 function uninstallDapr() {
-    echo "Uninstalling dapr..."
+    echo "Uninstalling dapr ⚙..."
 
     helm uninstall dapr -n dapr-system --dry-run && \
         helm uninstall dapr -n dapr-system
@@ -218,7 +218,7 @@ function validateEnvVars() {
 # parameters:
 # - new test config env file
 function newTestConfig() {
-  cp "$SCRIPT_DIR/perf.env" $1
+  cp "$SCRIPT_DIR/perf.env" "$1"
   sed -i "s|<DAPR_REGISTRY>|$DAPR_REGISTRY|g" "$1"
   sed -i "s|<DAPR_TAG>|$DAPR_QUALIFIED_TAG|g" "$1"
   source "$1"
