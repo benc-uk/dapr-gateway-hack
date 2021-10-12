@@ -16,6 +16,11 @@ data:
 
       resolver kube-dns.kube-system.svc.cluster.local;
 
+      log_format custom '##### [$time_local] $remote_addr $ssl_preread_server_name $targetStub '
+                 '$protocol $status $bytes_sent $bytes_received';
+      
+      access_log /dev/stdout custom buffer=1k flush=1s;
+
       server {
         set $domain cluster.local;
 

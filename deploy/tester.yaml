@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: curl
+spec:
+  selector:
+    matchLabels:
+      app: curl
+  template:
+    metadata:
+      labels:
+        app: curl
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "curl"
+        dapr.io/log-level: "debug"
+        dapr.io/config: "oneweek"
+    spec:
+      containers:
+        - name: curl
+          image: curlimages/curl
+          resources:
+            limits:
+              memory: "50Mi"
+              cpu: "500m"
+          command: ["/bin/sh", "-c", "--"]
+          args: ["while true; do sleep 30; done;"]
