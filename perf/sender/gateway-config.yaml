@@ -1,0 +1,23 @@
+apiVersion: dapr.io/v1alpha1
+kind: Configuration
+metadata:
+  name: gateway-config
+  namespace: dapr-tests
+spec:
+  mtls:
+    allowedClockSkew: 15m
+    enabled: true
+    workloadCertTTL: 24h
+  tracing:
+    samplingRate: "1"
+    zipkin:
+      endpointAddress: "http://zipkin.default.svc.cluster.local:9411/api/v2/spans"
+  gateway:
+    enabled: true
+    endpoints:
+    - name: net1
+      address: "<CLUSTER2_GW_SVC>:50002"
+      hostname: "cluster.net1"
+    - name: net2
+      address: "<CLUSTER3_GW_SVC>:50002"
+      hostname: "cluster.net2"
